@@ -20,40 +20,7 @@ def validate_api_key(api_key):
     if status == "banned":
         return {"error": "API key is banned", "status_code": 403}
     
-    return {"valid": True}
-
-def get_player_info(uid):
-    try:
-        headers = {
-            "Host": "shop2game.com",
-            "Connection": "keep-alive",
-            "Content-Length": "58",
-            "accept": "application/json",
-            "x-datadome-clientid": "GvEFJuBKzy0EHFZKO2XE67DE09lMAaipIuIwicrcRoEn4nBgZe-p6Ki3ifFTbozSNqu-Q4hUhY3AJbnBHOB8HS052OPgZcB1FJ431NuEO7ls1lam84GqpEYS_jUbqht",
-            "content-type": "application/json",
-            "sec-ch-ua-mobile": "?1",
-            "User-Agent": "Mozilla/5.0 (Linux; Android 8.0.0; Plume L2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.88 Mobile Safari/537.36",
-            "sec-ch-ua-platform": "\"Android\"",
-            "Origin": "https://shop2game.com",
-            "Sec-Fetch-Site": "same-origin",
-            "Sec-Fetch-Mode": "cors",
-            "Sec-Fetch-Dest": "empty",
-            "Referer": "https://shop2game.com/app/100067/idlogin",
-            "Accept-Encoding": "gzip, deflate, br",
-            "Accept-Language": "en-US,en;q=0.9,ar-DZ;q=0.8,ar;q=0.7"
-        }
-        data = {"app_id": 100067, "login_id": uid, "app_server_id": 0}
-        res = requests.post('https://shop2game.com/api/auth/player_id_login', json=data, headers=headers, timeout=10)
-        if res.status_code == 200:
-            j = res.json()
-            return {
-                "player_name": j.get("nickname", "Unknown"),
-                "region": j.get("region", "Unknown"),
-                "openid": j.get("open_id", "")
-            }
-    except Exception:
-        pass
-    return {"player_name": "Unknown", "region": "Unknown", "openid": ""}
+    return {"valid": True} 
 
 def check_banned(player_id):
     url = f"https://ff.garena.com/api/antihack/check_banned?lang=en&uid={player_id}"
@@ -65,29 +32,24 @@ def check_banned(player_id):
     }
 
     try:
-        response = requests.get(url, headers=headers, timeout=10)
+        response = requests.get(url, headers=headers)
         if response.status_code == 200:
             data = response.json().get("data", {})
             is_banned = data.get("is_banned", 0)
             period = data.get("period", 0)
 
-            player_info = get_player_info(player_id)
-
             result = {
                 "credits": "@ishakspeed",
                 "channel": "https://t.me/ishakspeed",
-                "player_name": player_info["player_name"] 
                 "status": "BANNED" if is_banned else "NOT BANNED",
                 "ban_period": period if is_banned else 0,
                 "uid": player_id,
-                "region": player_info["region"],
-                "openid": player_info["openid"],
                 "is_banned": bool(is_banned)
             }
 
-            return Response(json.dumps(result, ensure_ascii=False), mimetype="application/json")
+            return Response(json.dumps(result), mimetype="application/json")
         else:
-            return Response(json.dumps({"error": "Failed to fetch data from Garena", "status_code": 500}), mimetype="application/json")
+            return Response(json.dumps({"error": "Failed to fetch data from server", "status_code": 500}), mimetype="application/json")
     except Exception as e:
         return Response(json.dumps({"error": str(e), "status_code": 500}), mimetype="application/json")
 
